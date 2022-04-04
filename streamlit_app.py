@@ -11,7 +11,7 @@ import cv2
 from Utils import *
 from io import BytesIO
 
-model_path="C:/Users/10121335/Desktop/Merchant_Landmark_V1_30122021/30122021SavedModels/SavedModel300Epochs"
+model_path="C:/Users/10121335/Desktop/Merchant_Landmark_V1_30122021/30122021SavedModels/SavedModel100Epochs"
 model = tf.keras.models.load_model(model_path,custom_objects=None)
 
 
@@ -20,6 +20,31 @@ model = tf.keras.models.load_model(model_path,custom_objects=None)
 st.subheader("Upload Merchant Knee View")
 image_file = st.file_uploader("Upload Images", type=["dcm"])
 
+
+examples=["C:/Users/10121335/Desktop/Merchant_Landmark_V1_30122021/Dicoms/1.2.392.200036.9107.500.304.423.20111205.94459.10423.dcm"
+          ,"C:/Users/10121335/Desktop/Merchant_Landmark_V1_30122021/Dicoms/1.2.392.200036.9107.500.304.423.20120225.115452.10423.dcm",
+          "C:/Users/10121335/Desktop/Merchant_Landmark_V1_30122021/Dicoms/1.2.392.200036.9107.500.304.423.20120509.174735.10423.dcm"]
+
+colx1, colx2, colx3 = st.columns(3)
+with colx1:
+    st.text("Example  Dicom ")
+
+    if st.button('Example 1'):
+        image_file=examples[0]
+
+with colx2:
+    st.text("Example  Dicom ")
+
+    if st.button('Example 2'):
+        image_file=examples[1]
+
+
+with colx3:
+    st.text("Example  Dicom ")
+
+    if st.button('Example 3'):
+        image_file=examples[2]
+    
 
 if image_file is not None:
     st.text("Making A Prediction ....")
