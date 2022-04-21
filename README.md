@@ -1,12 +1,19 @@
 # Automatation-Drawing-Merchant-Lines-and-Angles-of-Knee
 
 
+As soon as possible , the paper will be published 
+
+
 ### The Dataset
 
 For training algorithm, the training data was prepared from [LERA - Lower Extremity Radiographs](https://aimi.stanford.edu/lera-lower-extremity-radiographs) . It has consists of Merchant view of the knee and their landmark heatmaps.
 
 ##### Dataset Description 
 In this retrospective, HIPAA-compliant, IRB-approved study, we collected data from 182 patients who underwent a radiographic examination at the Stanford University Medical Center between 2003 and 2014. The dataset consists of images of the foot, knee, ankle, or hip associated with each patient.
+
+
+[***On Hugging Face App*** , Check Out !](https://huggingface.co/spaces/SerdarHelli/Knee-View-Merchant-Landmark-Detection)
+
 
 ### Train Your Own Model
 <img align="left" width="33%" src="https://github.com/ImagingYeditepe/Automatation-Drawing-Merchant-Lines-and-Angles-of-Knee/blob/main/Figures/example_data.png">
