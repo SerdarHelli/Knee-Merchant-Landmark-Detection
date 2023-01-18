@@ -1,123 +1,88 @@
-# -*- coding: utf-8 -*-
-"""
-@author: serdarhelli
-"""
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization,concatenate,Conv2DTranspose,Dropout,AveragePooling2D,Add
+
 import tensorflow as tf
-from Adaptive_Wing_Loss import Adaptive_Wing_Loss
+from networks import *
+from loss import *
 
-def Spatial_Configuration1(convc) :
-  sconv = AveragePooling2D(pool_size=(16, 16))(convc)
+class ModelKnee(tf.keras.Model):
+    def __init__(
+        self
+    ):
+        super(ModelKnee, self).__init__()
+        self.shape=(256,256,1)
+        self.num_classes=6
+        self.model = build_model(self.shape,self.num_classes)
+        self.loss1 = tf.keras.metrics.Mean(name="loss1*1e3")
+        self.loss2 = tf.keras.metrics.Mean(name="loss2*1e3")
+        self.point_loss = tf.keras.metrics.Mean(name="point_loss")
+        self.dice_segmentloss=tf.keras.metrics.Mean(name="Dice_loss")
+        self.total_loss = tf.keras.metrics.Mean(name="total_loss")
+        self.MSE = tf.keras.metrics.Mean(name="MSE*1e4")
 
-  sconv = Conv2D(128,(11,11),padding="same",  kernel_initializer = 'he_normal')(sconv)
-  sconv=BatchNormalization()(sconv)
-  sconv=tf.keras.layers.LeakyReLU( alpha=0.1)(sconv)
-  sconv=Dropout(0.5)(sconv)
+    def compile(self):
+        super(ModelKnee, self).compile()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
+        self.loss_fn = Adaptive_Wing_Loss()
+        self.metric_fn=tf.keras.losses.MeanSquaredError()
+        self.loss_points=PointMSE()
+        self.dice_segmentloss_fn=Segmentation_Loss()
 
-  sconv = Conv2D(128,(11,11), padding="same" , kernel_initializer = 'he_normal')(sconv)
-  sconv_c=BatchNormalization()(sconv)
-  sconv=tf.keras.layers.LeakyReLU( alpha=0.1)(sconv)
-  sconv=Dropout(0.5)(sconv)
-
-  sconv = Conv2D(128,(11,11),padding="same", kernel_initializer = 'he_normal')(sconv)
-  sconv=BatchNormalization()(sconv)
-  sconv=tf.keras.layers.LeakyReLU(alpha=0.1)(sconv)
-  sconv=Dropout(0.5)(sconv)
-
-  sconv = Conv2D(6,(11,11), activation = "tanh", padding="same", kernel_initializer =tf.keras.initializers.RandomNormal(stddev=0.0001),kernel_regularizer=tf.keras.regularizers.l2(0.0005))(sconv)
-  sconv1 = tf.keras.layers.UpSampling2D(size=(16, 16),interpolation='bilinear')(sconv)
-  return sconv1
-
-
-def UNet(inputs,x_dim,y_dim):
-  
-  u = Conv2D(32,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
-  u=BatchNormalization()(u)
-  u = Conv2D(32,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-  u=Dropout(0.1)(u)
-  u1 = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-
-  u = AveragePooling2D(pool_size=(2, 2))(u1)
-  u = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-  u=Dropout(0.2)(u)
-  u2 = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-
-  u = AveragePooling2D(pool_size=(2, 2))(u2)
-  u = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-  u=Dropout(0.3)(u)
-  u3 = Conv2D(128,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-
-  u = AveragePooling2D(pool_size=(2, 2))(u3)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-  u=Dropout(0.3)(u)
-  u4 = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-
-  u = AveragePooling2D(pool_size=(2, 2))(u4)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u) 
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u) 
-  u=BatchNormalization()(u)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(256,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u) 
-  u=BatchNormalization()(u)
-  u = Conv2D(512,(3,3), activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)  
-  u=BatchNormalization()(u)
+    @property
+    def metrics(self):
+        return [
+            self.total_loss,
+            self.loss1,
+            self.loss2,
+            self.dice_segmentloss,
+            self.point_loss,
+            self.MSE
+        ]
 
 
-  u = tf.keras.layers.UpSampling2D(interpolation='bilinear')(u)
-  u = Conv2D(256,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(256,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=Add()([u,u4])
 
-  u = tf.keras.layers.UpSampling2D(interpolation='bilinear')(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=Add()([u,u3])
 
-  u = tf.keras.layers.UpSampling2D(interpolation='bilinear')(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=Add()([u,u2])
 
-  u = tf.keras.layers.UpSampling2D(interpolation='bilinear')(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(128,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=Add()([u,u1])
+    def train_step(self, batch):
 
-  u = Conv2D(64,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
-  u=BatchNormalization()(u)
-  u=Dropout(0.3)(u)
-  u = Conv2D(32,3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(u)
+        X,Y=batch
+        with tf.GradientTape() as tape:
+            predict_1,predict_2 = self.model(X, training=True)
+            loss1 =self.loss_fn(Y,predict_1) *1000
+            loss2 =self.loss_fn(Y,predict_2) *1000
+            dice_segmentloss=self.dice_segmentloss_fn(Y,predict_2)
+            point_loss=self.loss_points(Y,predict_2)
+            total_loss=((loss1+loss2)/2)+point_loss+dice_segmentloss
+            MSE=self.metric_fn(Y,predict_2)*1000
+            
+        gen_gradient = tape.gradient(total_loss, self.model.trainable_variables)
+        self.optimizer.apply_gradients(
+            zip(gen_gradient, self.model.trainable_variables)
+        )
+        self.loss1.update_state(loss1)
+        self.loss2.update_state(loss2)
+        self.dice_segmentloss.update_state(dice_segmentloss)
 
-  return u
+        self.total_loss.update_state(total_loss)
+        self.MSE.update_state(MSE)
+        self.point_loss.update_state(point_loss)
+        results = {m.name: m.result() for m in self.metrics}
+        return results
 
-def getModel(input_shape,points_number):
-    AWL=Adaptive_Wing_Loss()
-    inputs=tf.keras.layers.Input(shape=(input_shape))
-    
-    unet_output=UNet(inputs,input_shape[0],input_shape[1])
-    local_app = Conv2D(points_number,(1,1), activation = "linear", padding = 'same', kernel_initializer = tf.keras.initializers.RandomNormal(stddev=0.0001),kernel_regularizer=tf.keras.regularizers.l2(0.0005))(unet_output)
-    
-    config_output=Spatial_Configuration1(local_app)
-    outputs = tf.keras.layers.Multiply()([local_app,config_output])
-    
-    model = tf.keras.Model(inputs = inputs, outputs = [local_app,outputs])
-    
-    return model
+
+    def test_step(self,batch):
+        X,Y=batch
+        predict_1,predict_2 = self.model(X, training=True)
+        loss1 =self.loss_fn(Y,predict_1) *1000
+        loss2 =self.loss_fn(Y,predict_2) *1000   
+        dice_segmentloss=self.dice_segmentloss_fn(Y,predict_2)
+        point_loss=self.loss_points(Y,predict_2)
+        total_loss=((loss1+loss2)/2)+point_loss+dice_segmentloss
+        MSE=self.metric_fn(Y,predict_2)*1000
+        self.loss1.update_state(loss1)
+        self.loss2.update_state(loss2)
+        self.total_loss.update_state(total_loss)
+        self.MSE.update_state(MSE)
+        self.point_loss.update_state(point_loss)
+        self.dice_segmentloss.update_state(dice_segmentloss)
+
+        results = {m.name: m.result() for m in self.metrics}
+        return results
