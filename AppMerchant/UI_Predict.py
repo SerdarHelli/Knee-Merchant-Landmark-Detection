@@ -3,7 +3,7 @@ import tkinter  as tk
 from PIL import Image as Pil_image, ImageTk as Pil_imageTk
 import numpy as np
 from tensorflow.keras.models import load_model
-from Utils import *
+from utils import *
 from tkinter import filedialog as fd
 from tkzoom import *
 import random

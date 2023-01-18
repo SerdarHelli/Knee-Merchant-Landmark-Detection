@@ -9,7 +9,7 @@ from natsort import natsorted
 import numpy as np
 import cv2
 import tensorflow as tf
-from Utils import *
+from utils import *
 import argparse
 import sys 
 if __name__ == "__main__":
@@ -34,6 +34,9 @@ if __name__ == "__main__":
         df=pd.DataFrame(columns=[ 'PatientID','PatientName',"StudyDate","InstitutionName","PatientAge","PatientSex","Pateller_Congruence_Angle","Paralel_Tilt_Angle","SOP_Instance_UID","Done"])
     
     model = tf.keras.models.load_model(model_path,custom_objects=None)
+    model.summary()
+    print("##########################################################################################")
+
     dirs=natsorted(os.listdir(path))
     print(path+"/")
 
